@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main>
+      <form method="post">
+        <label for="username">Username</label>
+        <input
+          type="text"
+          name="username"
+          id="username"
+          required
+          value="<%= locals.username %>"
+        />
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" required />
+        <label for="confirmPassword">Confirm Password</label>
+        <input
+          type="password"
+          name="confirmPassword"
+          id="confirmPassword"
+          required
+        />
+        <button>Submit</button>
+      </form>
+    </main>
+  </body>
+</html>
