@@ -1,5 +1,6 @@
 const express = require('express');
 const userController = require('../controllers/userController');
+const fileController = require('../controllers/fileController');
 
 const router = express.Router();
 
@@ -16,6 +17,7 @@ router.get('*', (req, res, next) => {
   return next();
 });
 
-router.get('/', (req, res, next) => res.send(req.user));
+router.get('/', fileController.index);
+router.post('/upload', fileController.upload);
 
 module.exports = router;

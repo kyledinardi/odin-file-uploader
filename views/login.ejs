@@ -7,6 +7,14 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <nav>
+      <% if (currentUser) { %>
+      <a href="/logout"><button>Log Out</button></a>
+      <% } else { %>
+      <a href="/login"><button>Log In</button></a>
+      <a href="sign-up"><button>Sign Up</button></a>
+      <% } %>
+    </nav>
     <main>
       <form method="post">
         <label for="username">Username</label>

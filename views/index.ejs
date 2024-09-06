@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Error</title>
+    <title><%= title %></title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -16,9 +16,11 @@
       <% } %>
     </nav>
     <main>
-      <h1><%= message %></h1>
-      <h2><%= error.status %></h2>
-      <pre><%= error.stack %></pre>
+      <button>Create Folder</button>
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" id="file" />
+        <button>Upload</button>
+      </form>
     </main>
   </body>
 </html>
