@@ -51,12 +51,12 @@ exports.signUpPost = [
         throw new Error(err);
       }
 
-      const data = {
-        username: req.body.username,
-        password_hash: hashedPassword,
-      };
-
-      const user = await prisma.user.create({ data });
+      const user = await prisma.user.create({
+        data: {
+          username: req.body.username,
+          password_hash: hashedPassword,
+        },
+      });
 
       req.login(user, (error) => {
         if (!error) {

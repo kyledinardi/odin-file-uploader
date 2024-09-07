@@ -1,5 +1,6 @@
 const express = require('express');
 const userController = require('../controllers/userController');
+const folderController = require('../controllers/folderController');
 const fileController = require('../controllers/fileController');
 
 const router = express.Router();
@@ -19,5 +20,11 @@ router.get('*', (req, res, next) => {
 
 router.get('/', fileController.index);
 router.post('/upload', fileController.upload);
+
+router.post('/folders/create-folder', folderController.createFolder);
+router.get('/folders/:id/edit', folderController.updateFolderGet);
+router.post('/folders/:id/edit', folderController.updateFolderPost);
+router.get('/folders/:id/delete', folderController.deleteFolderGet);
+router.post('/folders/:id/delete', folderController.deleteFolderPost);
 
 module.exports = router;

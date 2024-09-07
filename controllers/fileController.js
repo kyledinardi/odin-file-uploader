@@ -1,8 +1,8 @@
 const asyncHandler = require('express-async-handler');
 const multer = require('multer');
-const { unlink } = require('fs/promises');
-const cloudinary = require('cloudinary').v2;
+// const { unlink } = require('fs/promises');
 const { PrismaClient } = require('@prisma/client');
+// const cloudinary = require('cloudinary').v2;
 
 const storage = multer.diskStorage({
   destination: 'uploads/',
@@ -14,7 +14,13 @@ const storage = multer.diskStorage({
 const upload = multer({ storage, limits: { fileSize: 1e7 } });
 const prisma = new PrismaClient();
 
-exports.index = (req, res, next) => res.render('index', { title: 'Home' });
+exports.index = asyncHandler(async (req, res, next) => {
+  const folders = await prisma.folder.findMany({
+    where: { userId: req.user.id },
+  });
+
+  return res.render('index', { title: 'Home', folders });
+});
 
 exports.upload = [
   upload.single('file'),

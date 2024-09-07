@@ -15,7 +15,17 @@ model Session {
 }
 
 model User {
-  id            Int    @id @default(autoincrement())
-  username      String @unique
+  id            Int      @id @default(autoincrement())
+  username      String   @unique
   password_hash String
+  folders       Folder[]
+}
+
+model Folder {
+  id      Int      @id @default(autoincrement())
+  name    String
+  created DateTime @default(now())
+  updated DateTime @default(now())
+  User    User?    @relation(fields: [userId], references: [id])
+  userId  Int
 }

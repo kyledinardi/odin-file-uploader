@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <nav>
+      <% if (currentUser) { %>
+      <a href="/logout"><button>Log Out</button></a>
+      <% } else { %>
+      <a href="/login"><button>Log In</button></a>
+      <a href="sign-up"><button>Sign Up</button></a>
+      <% } %>
+    </nav>
+    <main>
+      <h1>Are you sure you want to delete <%= folder.name %>?</h1>
+      <form method="post">
+        <button>Yes</button>
+      </form>
+      <a href="/"><button>No</button></a>
+    </main>
+  </body>
+</html>
