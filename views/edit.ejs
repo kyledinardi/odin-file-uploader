@@ -9,6 +9,7 @@
   <body>
     <nav>
       <% if (currentUser) { %>
+      <a href="/"><button>Home</button></a>
       <a href="/logout"><button>Log Out</button></a>
       <% } else { %>
       <a href="/login"><button>Log In</button></a>
@@ -16,16 +17,15 @@
       <% } %>
     </nav>
     <main>
-      <h1>Enter a new name for <%= folder.name %></h1>
+      <h1>Enter a new name for <%= name %></h1>
       <form method="post">
+        <input type="text" name="name" id="name" value="<%= name %>" required />
         <input
-          type="text"
-          name="name"
-          id="name"
-          value="<%= folder.name %>"
-          required
+          type="hidden"
+          name="extension"
+          value="<%= locals.extension ? extension : '' %>"
         />
-        <button>Update Folder</button>
+        <button>Update</button>
       </form>
     </main>
   </body>

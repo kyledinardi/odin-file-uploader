@@ -18,13 +18,19 @@ router.get('*', (req, res, next) => {
   return next();
 });
 
-router.get('/', fileController.index);
-router.post('/upload', fileController.upload);
-
+router.get('/', folderController.index);
+router.get('/folders/:id', folderController.getFolder);
 router.post('/folders/create-folder', folderController.createFolder);
 router.get('/folders/:id/edit', folderController.updateFolderGet);
 router.post('/folders/:id/edit', folderController.updateFolderPost);
 router.get('/folders/:id/delete', folderController.deleteFolderGet);
 router.post('/folders/:id/delete', folderController.deleteFolderPost);
+
+router.post('/folders/:id/upload', fileController.upload);
+router.post('/files/:id/download', fileController.download);
+router.get('/files/:id/edit', fileController.updateFileGet);
+router.post('/files/:id/edit', fileController.updateFilePost);
+router.get('/files/:id/delete', fileController.deleteFileGet);
+router.post('/files/:id/delete', fileController.deleteFilePost);
 
 module.exports = router;
