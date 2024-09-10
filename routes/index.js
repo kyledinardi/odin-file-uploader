@@ -27,7 +27,7 @@ router.get('/folders/:id/delete', folderController.deleteFolderGet);
 router.post('/folders/:id/delete', folderController.deleteFolderPost);
 
 router.post('/folders/:id/upload', fileController.upload);
-router.post('/files/:id/download', fileController.download);
+router.get('/files/:id/download', fileController.download);
 router.get('/files/:id/edit', fileController.updateFileGet);
 router.post('/files/:id/edit', fileController.updateFilePost);
 router.get('/files/:id/delete', fileController.deleteFileGet);

@@ -1,9 +1,11 @@
 const asyncHandler = require('express-async-handler');
 const multer = require('multer');
 const path = require('path');
-// const { unlink } = require('fs/promises');
+const { createWriteStream } = require('fs');
+const { unlink } = require('fs/promises');
+const { finished, Readable } = require('stream');
 const { PrismaClient } = require('@prisma/client');
-// const cloudinary = require('cloudinary').v2;
+const cloudinary = require('cloudinary').v2;
 
 const storage = multer.diskStorage({
   destination: 'uploads/',
@@ -20,12 +22,18 @@ exports.upload = [
 
   asyncHandler(async (req, res, next) => {
     const folderId = req.params.id;
+    const result = await cloudinary.uploader.upload(req.file.path);
+    unlink(req.file.path);
 
     await prisma.folder.update({
       where: { id: parseInt(folderId, 10) },
       data: {
         files: {
-          create: { name: req.file.filename, size: req.file.size },
+          create: {
+            name: req.file.filename,
+            size: req.file.size,
+            url: result.secure_url,
+          },
         },
       },
     });
@@ -34,7 +42,34 @@ exports.upload = [
   }),
 ];
 
-exports.download = (req, res, next) => {};
+exports.download = asyncHandler(async (req, res, next) => {
+  const file = await prisma.file.findUnique({
+    where: { id: parseInt(req.params.id, 10) },
+  });
+
+  const response = await fetch(file.url);
+  const destination = path.resolve('./downloads', file.name);
+  const fileStream = createWriteStream(destination);
+  const readablePipe = Readable.fromWeb(response.body).pipe(fileStream);
+
+  finished(readablePipe, (streamError) => {
+    if (streamError) {
+      return next(streamError);
+    }
+
+    return res.download(
+      destination,
+      path.basename(destination),
+      (downloadError) => {
+        if (downloadError) {
+          return next(downloadError);
+        }
+
+        return unlink(destination);
+      },
+    );
+  });
+});
 
 exports.updateFileGet = asyncHandler(async (req, res, next) => {
   const file = await prisma.file.findUnique({
