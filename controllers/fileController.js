@@ -1,11 +1,11 @@
 const asyncHandler = require('express-async-handler');
 const multer = require('multer');
 const path = require('path');
+const cloudinary = require('cloudinary').v2;
 const { createWriteStream } = require('fs');
 const { unlink } = require('fs/promises');
 const { finished, Readable } = require('stream');
 const { PrismaClient } = require('@prisma/client');
-const cloudinary = require('cloudinary').v2;
 
 const storage = multer.diskStorage({
   destination: 'uploads/',
@@ -25,20 +25,27 @@ exports.upload = [
     const result = await cloudinary.uploader.upload(req.file.path);
     unlink(req.file.path);
 
-    await prisma.folder.update({
-      where: { id: parseInt(folderId, 10) },
-      data: {
-        files: {
-          create: {
-            name: req.file.filename,
-            size: req.file.size,
-            url: result.secure_url,
-          },
-        },
-      },
-    });
+    const fileDetails = {
+      name: req.file.filename,
+      size: req.file.size,
+      url: result.secure_url,
+    };
 
-    return res.redirect(`/folders/${folderId}`);
+    if (req.params.id === 'index') {
+      await prisma.user.update({
+        where: { id: req.user.id },
+        data: { files: { create: fileDetails } },
+      });
+    } else {
+      await prisma.folder.update({
+        where: { id: parseInt(folderId, 10) },
+        data: { files: { create: fileDetails } },
+      });
+    }
+
+    return res.redirect(
+      req.params.id === 'index' ? '/' : `/folders/${req.params.id}`,
+    );
   }),
 ];
 
@@ -95,7 +102,9 @@ exports.updateFilePost = asyncHandler(async (req, res, next) => {
     data: { name: `${req.body.name}${req.body.extension}` },
   });
 
-  return res.redirect(`/folders/${updatedFile.folderId}`);
+  return res.redirect(
+    !updatedFile.folderId ? '/' : `/folders/${updatedFile.folderId}`,
+  );
 });
 
 exports.deleteFileGet = asyncHandler(async (req, res, next) => {
@@ -121,5 +130,7 @@ exports.deleteFilePost = asyncHandler(async (req, res, next) => {
     where: { id: parseInt(req.params.id, 10) },
   });
 
-  return res.redirect(`/folders/${deletedFile.folderId}`);
+  return res.redirect(
+    !deletedFile.folderId ? '/' : `/folders/${deletedFile.folderId}`,
+  );
 });

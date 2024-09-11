@@ -20,7 +20,8 @@ router.get('*', (req, res, next) => {
 
 router.get('/', folderController.index);
 router.get('/folders/:id', folderController.getFolder);
-router.post('/folders/create-folder', folderController.createFolder);
+router.get('/folders/:id/up-directory', folderController.upDirectory);
+router.post('/folders/:id/create-folder', folderController.createFolder);
 router.get('/folders/:id/edit', folderController.updateFolderGet);
 router.post('/folders/:id/edit', folderController.updateFolderPost);
 router.get('/folders/:id/delete', folderController.deleteFolderGet);
