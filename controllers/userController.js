@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 const asyncHandler = require('express-async-handler');
 const { body, validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
@@ -91,3 +92,61 @@ exports.logout = (req, res, next) => {
     return res.redirect('/login');
   });
 };
+
+exports.authenticate = (req, res, next) => {
+  if (!req.user) {
+    return res.redirect('/login');
+  }
+
+  return next();
+};
+
+exports.authorizeFolder = asyncHandler(async (req, res, next) => {
+  let folder = await prisma.folder.findUnique({
+    where: { id: parseInt(req.params.id, 10) },
+  });
+
+  while (!folder.userId) {
+    folder = await prisma.folder.findUnique({
+      where: { id: parseInt(folder.parentfolderId, 10) },
+    });
+  }
+
+  if (folder.userId !== req.user.id) {
+    const err = new Error('Unauthorized User');
+    err.status = 403;
+    return next(err);
+  }
+
+  return next();
+});
+
+exports.authorizeFile = asyncHandler(async (req, res, next) => {
+  const file = await prisma.file.findUnique({
+    where: { id: parseInt(req.params.id, 10) },
+  });
+
+  if (!file.userId) {
+    let folder = await prisma.folder.findUnique({
+      where: { id: parseInt(file.folderId, 10) },
+    });
+
+    while (!folder.userId) {
+      folder = await prisma.folder.findUnique({
+        where: { id: parseInt(folder.parentfolderId, 10) },
+      });
+    }
+
+    if (folder.userId !== req.user.id) {
+      const err = new Error('Unauthorized User');
+      err.status = 403;
+      return next(err);
+    }
+  } else if (file.userId !== req.user.id) {
+    const err = new Error('Unauthorized User');
+    err.status = 403;
+    return next(err);
+  }
+
+  return next();
+});

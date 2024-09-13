@@ -4,21 +4,18 @@ const folderController = require('../controllers/folderController');
 const fileController = require('../controllers/fileController');
 
 const router = express.Router();
-
 router.get('/login', userController.loginGet);
 router.post('/login', userController.loginPost);
 router.get('/sign-up', userController.signUpGet);
 router.post('/sign-up', userController.signUpPost);
 router.get('/logout', userController.logout);
 
-router.get('*', (req, res, next) => {
-  if (!req.user) {
-    return res.redirect('/login');
-  }
-  return next();
-});
+router.get('*', userController.authenticate);
+router.get('/folders/:id*', userController.authorizeFolder);
+router.get('/files/:id*', userController.authorizeFile);
 
 router.get('/', folderController.index);
+
 router.get('/folders/:id', folderController.getFolder);
 router.get('/folders/:id/up-directory', folderController.upDirectory);
 router.post('/folders/:id/create-folder', folderController.createFolder);

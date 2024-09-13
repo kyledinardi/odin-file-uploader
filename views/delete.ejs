@@ -13,7 +13,7 @@
       <a href="/logout"><button>Log Out</button></a>
       <% } else { %>
       <a href="/login"><button>Log In</button></a>
-      <a href="sign-up"><button>Sign Up</button></a>
+      <a href="/sign-up"><button>Sign Up</button></a>
       <% } %>
     </nav>
     <main>
@@ -22,9 +22,9 @@
         <form method="post">
           <button>Delete</button>
         </form>
-        <a href="/<%= locals.folderId ? `folders/${folderId}` : '' %>"
-          ><button>Cancel</button></a
-        >
+        <a href="<%= folder.isIndex ? '/' :  `/folders/${folder.id}` %>">
+          <button>Cancel</button>
+        </a>
       </div>
     </main>
   </body>

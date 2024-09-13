@@ -66,11 +66,6 @@ td {
   background-color: white;
 }
 
-td button {
-  display: block;
-  margin: auto;
-}
-
 .emptyTableRow {
   text-align: center;
 }
