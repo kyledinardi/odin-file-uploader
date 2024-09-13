@@ -55,11 +55,10 @@ exports.upDirectory = asyncHandler(async (req, res, next) => {
     err.status = 404;
     return next(err);
   }
-  if (!folder.parentfolderId) {
-    return res.redirect('/');
-  }
 
-  return res.redirect(`/folders/${folder.parentfolderId}`);
+  return res.redirect(
+    folder.userId ? '/' : `/folders/${folder.parentfolderId}`,
+  );
 });
 
 exports.createFolder = [

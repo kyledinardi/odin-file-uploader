@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%= title %></title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <nav>
@@ -18,12 +18,14 @@
     </nav>
     <main>
       <form method="post">
-        <label for="username">Username</label>
-        <input type="text" name="username" id="username" required />
-        <label for="password">Password</label>
-        <input type="password" name="password" id="password" required />
-        <button>Submit</button>
-        <a href="sign-up">Sign Up</a>
+        <div class="fields">
+          <label for="username">Username</label>
+          <input type="text" name="username" id="username" required />
+          <label for="password">Password</label>
+          <input type="password" name="password" id="password" required />
+        </div>
+        <button>Log In</button>
+        <p><a href="sign-up">Sign Up</a></p>
       </form>
     </main>
   </body>

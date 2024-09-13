@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%= title %></title>
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
     <nav>
@@ -18,12 +18,14 @@
     </nav>
     <main>
       <h1>Are you sure you want to delete <%= name %>?</h1>
-      <form method="post">
-        <button>Delete</button>
-      </form>
-      <a href="/<%= locals.folderId ? `folders/${folderId}` : '' %>"
-        ><button>Cancel</button></a
-      >
+      <div class="buttons">
+        <form method="post">
+          <button>Delete</button>
+        </form>
+        <a href="/<%= locals.folderId ? `folders/${folderId}` : '' %>"
+          ><button>Cancel</button></a
+        >
+      </div>
     </main>
   </body>
 </html>
