@@ -1,0 +1,107 @@
+<!-- /share/73a6884d-75e1-44ab-b821-7b6b2f9a2e7c -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <nav>
+      <% if (currentUser) { %>
+      <a href="/"><button>Home</button></a>
+      <a href="/logout"><button>Log Out</button></a>
+      <% } else { %>
+      <a href="/login"><button>Log In</button></a>
+      <a href="/sign-up"><button>Sign Up</button></a>
+      <% } %>
+    </nav>
+    <main>
+      <div class="toolbar">
+        <button>
+          <a href="<%= shareUrlRoot %>/folders/<%= folder.id %>/up-directory">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              height="24px"
+              viewBox="0 -960 960 960"
+              width="24px"
+            >
+              <path
+                d="M440-160v-487L216-423l-56-57 320-320 320 320-56 57-224-224v487h-80Z"
+              />
+            </svg>
+          </a>
+        </button>
+        <p><%= folder.path %></p>
+      </div>
+      <div>
+        <h2><%= title %></h2>
+        <div>
+          <% if (Date.now() < folder.shareExpires.getTime()) { %>
+          <div>
+            <p>
+              Share Address:
+              <a href="<%= folder.shareUrl %>"><%= folder.shareUrl %></a>
+            </p>
+            <p>Active Until: <%= folder.shareExpires.toLocaleString() %></p>
+          </div>
+          <% } %>
+        </div>
+        <table>
+          <tr>
+            <th>Name</th>
+            <th>Created At</th>
+            <th>Updated At</th>
+            <th>File Size</th>
+            <th></th>
+          </tr>
+          <% childFolders.map((childFolder) => { %>
+          <tr>
+            <td>
+              <a href="<%- shareUrlRoot %>/folders/<%= childFolder.id %>">
+                <%= childFolder.name %>
+              </a>
+            </td>
+            <td><%= childFolder.created.toLocaleString() %></td>
+            <td><%= childFolder.updated.toLocaleString() %></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <% }) %> <% files.map((file) => { %>
+          <tr>
+            <td><%= file.name %></td>
+            <td><%= file.created.toLocaleString() %></td>
+            <td><%= file.updated.toLocaleString() %></td>
+            <td><%= file.size %></td>
+            <td>
+              <a
+                href="<%= shareUrlRoot %>/files/<%= file.id %>/download"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    height="24px"
+                    viewBox="0 -960 960 960"
+                    width="24px"
+                  >
+                    <path
+                      d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"
+                    />
+                  </svg>
+                </button>
+              </a>
+            </td>
+          </tr>
+          <% }) %><% if (childFolders.length === 0 && files.length === 0) { %>
+          <tr>
+            <td class="emptyTableRow" colspan="5">This folder is empty</td>
+          </tr>
+          <% } %>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>

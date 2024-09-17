@@ -28,23 +28,28 @@ model Folder {
   name           String
   created        DateTime @default(now())
   updated        DateTime @default(now())
+  shareExpires   DateTime @default(now())
+  shareUrl       String?
+  isIndex        Boolean?
   user           User?    @relation(fields: [userId], references: [id])
   userId         Int?
   childFolders   Folder[] @relation("childFolders")
-  parentFolder   Folder?  @relation("childFolders", fields: [parentfolderId], references: [id], onDelete: Cascade)
-  parentfolderId Int?
+  parentFolder   Folder?  @relation("childFolders", fields: [parentFolderId], references: [id], onDelete: Cascade)
+  parentFolderId Int?
   files          File[]
 }
 
 model File {
-  id       Int      @id @default(autoincrement())
-  name     String
-  created  DateTime @default(now())
-  updated  DateTime @default(now())
-  size     Int
-  url      String
-  folder   Folder?  @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  folderId Int?
-  user     User?    @relation(fields: [userId], references: [id])
-  userId   Int?
+  id           Int      @id @default(autoincrement())
+  name         String
+  created      DateTime @default(now())
+  updated      DateTime @default(now())
+  size         Int
+  url          String
+  shareExpires DateTime @default(now())
+  shareUrl     String?
+  folder       Folder?  @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  folderId     Int?
+  user         User?    @relation(fields: [userId], references: [id])
+  userId       Int?
 }

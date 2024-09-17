@@ -8,7 +8,7 @@ const { finished, Readable } = require('stream');
 const { PrismaClient } = require('@prisma/client');
 
 const storage = multer.diskStorage({
-  destination: 'uploads/',
+  destination: 'temp/',
   filename(req, file, cb) {
     cb(null, file.originalname);
   },
@@ -21,31 +21,53 @@ exports.upload = [
   upload.single('file'),
 
   asyncHandler(async (req, res, next) => {
-    const folderId = req.params.id;
     const result = await cloudinary.uploader.upload(req.file.path);
     unlink(req.file.path);
 
-    const fileDetails = {
-      name: req.file.filename,
-      size: req.file.size,
-      url: result.secure_url,
-    };
+    const queue = [
+      prisma.file.create({
+        data: {
+          name: req.file.filename,
+          size: req.file.size,
+          url: result.secure_url,
+        },
+      }),
 
-    if (req.params.id === 'index') {
-      await prisma.user.update({
+      prisma.folder.findUnique({
+        where: { id: parseInt(req.params.id, 10) },
+      }),
+    ];
+
+    const [file, folder] = await Promise.all(queue);
+    queue.length = 0;
+
+    queue.push(
+      prisma.user.update({
         where: { id: req.user.id },
-        data: { files: { create: fileDetails } },
-      });
-    } else {
-      await prisma.folder.update({
-        where: { id: parseInt(folderId, 10) },
-        data: { files: { create: fileDetails } },
-      });
+        data: { files: { connect: { id: file.id } } },
+      }),
+
+      prisma.folder.update({
+        where: { id: parseInt(req.params.id, 10) },
+        data: { files: { connect: { id: file.id } } },
+      }),
+    );
+
+    if (Date.now() < folder.shareExpires.getTime()) {
+      queue.push(
+        prisma.file.update({
+          where: { id: file.id },
+
+          data: {
+            shareExpires: folder.shareExpires,
+            shareUrl: `${folder.shareUrl}/files/${file.id}`,
+          },
+        }),
+      );
     }
 
-    return res.redirect(
-      req.params.id === 'index' ? '/' : `/folders/${req.params.id}`,
-    );
+    await Promise.all(queue);
+    return res.redirect(folder.isIndex ? '/' : `/folders/${req.params.id}`);
   }),
 ];
 
@@ -55,7 +77,7 @@ exports.download = asyncHandler(async (req, res, next) => {
   });
 
   const response = await fetch(file.url);
-  const destination = path.resolve('./downloads', file.name);
+  const destination = path.resolve('./temp', file.name);
   const fileStream = createWriteStream(destination);
   const readablePipe = Readable.fromWeb(response.body).pipe(fileStream);
 
@@ -67,12 +89,15 @@ exports.download = asyncHandler(async (req, res, next) => {
     return res.download(
       destination,
       path.basename(destination),
+      
       (downloadError) => {
+        unlink(destination);
+
         if (downloadError) {
           return next(downloadError);
         }
 
-        return unlink(destination);
+        return null;
       },
     );
   });
@@ -100,16 +125,18 @@ exports.updateFilePost = asyncHandler(async (req, res, next) => {
   const updatedFile = await prisma.file.update({
     where: { id: parseInt(req.params.id, 10) },
     data: { name: `${req.body.name}${req.body.extension}` },
+    include: { folder: true },
   });
 
   return res.redirect(
-    !updatedFile.folderId ? '/' : `/folders/${updatedFile.folderId}`,
+    updatedFile.folder.isIndex ? '/' : `/folders/${updatedFile.folderId}`,
   );
 });
 
 exports.deleteFileGet = asyncHandler(async (req, res, next) => {
   const file = await prisma.file.findUnique({
     where: { id: parseInt(req.params.id, 10) },
+    include: { folder: true },
   });
 
   if (!file) {
@@ -121,16 +148,17 @@ exports.deleteFileGet = asyncHandler(async (req, res, next) => {
   return res.render('delete', {
     title: 'Delete File?',
     name: file.name,
-    folderId: file.folderId,
+    folder: file.folder,
   });
 });
 
 exports.deleteFilePost = asyncHandler(async (req, res, next) => {
   const deletedFile = await prisma.file.delete({
     where: { id: parseInt(req.params.id, 10) },
+    include: { folder: true },
   });
 
   return res.redirect(
-    !deletedFile.folderId ? '/' : `/folders/${deletedFile.folderId}`,
+    deletedFile.folder.isIndex ? '/' : `/folders/${deletedFile.folderId}`,
   );
 });

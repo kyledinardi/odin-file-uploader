@@ -5,22 +5,21 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 exports.index = asyncHandler(async (req, res, next) => {
-  const [folders, files] = await Promise.all([
-    prisma.folder.findMany({
-      where: { userId: req.user.id },
-    }),
+  const folder = await prisma.folder.findFirst({
+    where: { userId: req.user.id, isIndex: true },
+    include: { childFolders: true, files: true },
+  });
 
-    prisma.file.findMany({
-      where: { userId: req.user.id },
-    }),
-  ]);
+  if (!folder) {
+    const err = new Error('Server error: index not found');
+    return next(err);
+  }
 
   return res.render('index', {
-    title: 'Home',
-    folders,
-    files,
-    folderId: 'index',
-    path: '/',
+    title: folder.name,
+    childFolders: folder.childFolders,
+    files: folder.files,
+    folder,
   });
 });
 
@@ -38,16 +37,16 @@ exports.getFolder = asyncHandler(async (req, res, next) => {
 
   return res.render('index', {
     title: folder.name,
-    folders: folder.childFolders,
+    childFolders: folder.childFolders,
     files: folder.files,
-    folderId: req.params.id,
-    path: folder.path,
+    folder,
   });
 });
 
 exports.upDirectory = asyncHandler(async (req, res, next) => {
   const folder = await prisma.folder.findUnique({
     where: { id: parseInt(req.params.id, 10) },
+    include: { parentFolder: true },
   });
 
   if (!folder) {
@@ -56,9 +55,11 @@ exports.upDirectory = asyncHandler(async (req, res, next) => {
     return next(err);
   }
 
-  return res.redirect(
-    folder.userId ? '/' : `/folders/${folder.parentfolderId}`,
-  );
+  if (folder.isIndex || folder.parentFolder.isIndex) {
+    return res.redirect('/');
+  }
+
+  return res.redirect(`/folders/${folder.parentFolderId}`);
 });
 
 exports.createFolder = [
@@ -72,74 +73,61 @@ exports.createFolder = [
   asyncHandler(async (req, res, next) => {
     const errors = validationResult(req);
 
+    const folder = await prisma.folder.findUnique({
+      where: { id: parseInt(req.params.id, 10) },
+      include: { childFolders: true, files: true },
+    });
+
+    if (!folder) {
+      const err = new Error('Folder not found');
+      err.status = 404;
+      return next(err);
+    }
+
     if (!errors.isEmpty()) {
-      let folder = null;
-      let folders;
-      let files;
-
-      if (req.params.id === 'index') {
-        [folders, files] = await Promise.all([
-          prisma.folder.findMany({
-            where: { userId: req.user.id },
-          }),
-
-          prisma.file.findMany({
-            where: { userId: req.user.id },
-          }),
-        ]);
-      } else {
-        folder = await prisma.folder.findUnique({
-          where: { id: parseInt(req.params.id, 10) },
-          include: { childFolders: true, files: true },
-        });
-
-        folders = folder.childFolders;
-        files = folder.files;
-      }
-
       return res.render('index', {
-        title: req.params.id === 'index' ? 'Home' : folder.name,
-        folders,
-        files,
-        folderId: req.params.id,
-        path: req.params.id === 'index' ? '/' : folder.path,
+        title: folder.name,
+        childFolders: folder.childFolders,
+        files: folder.files,
+        folder,
         folderNameErrors: errors.array(),
       });
     }
 
-    if (req.params.id === 'index') {
-      await prisma.user.update({
-        where: { id: req.user.id },
-        data: {
-          folders: {
-            create: {
-              name: req.body.folderName,
-              path: `/${req.body.folderName}/`,
-            },
-          },
-        },
-      });
-    } else {
-      const folder = await prisma.folder.findUnique({
-        where: { id: parseInt(req.params.id, 10) },
-      });
+    const newFolder = await prisma.folder.create({
+      data: {
+        name: req.body.folderName,
+        path: `${folder.path}${req.body.folderName}/`,
+      },
+    });
 
-      await prisma.folder.update({
+    const updateQueue = [
+      prisma.user.update({
+        where: { id: req.user.id },
+        data: { folders: { connect: { id: newFolder.id } } },
+      }),
+
+      prisma.folder.update({
         where: { id: parseInt(req.params.id, 10) },
-        data: {
-          childFolders: {
-            create: {
-              name: req.body.folderName,
-              path: `${folder.path}${req.body.folderName}/`,
-            },
+        data: { childFolders: { connect: { id: newFolder.id } } },
+      }),
+    ];
+
+    if (Date.now() < folder.shareExpires.getTime()) {
+      updateQueue.push(
+        prisma.folder.update({
+          where: { id: newFolder.id },
+          
+          data: {
+            shareExpires: folder.shareExpires,
+            shareUrl: `${folder.shareUrl}/folders/${newFolder.id}`,
           },
-        },
-      });
+        }),
+      );
     }
 
-    return res.redirect(
-      req.params.id === 'index' ? '/' : `/folders/${req.params.id}`,
-    );
+    await Promise.all(updateQueue);
+    return res.redirect(folder.isIndex ? '/' : `/folders/${req.params.id}`);
   }),
 ];
 
@@ -151,6 +139,12 @@ exports.updateFolderGet = asyncHandler(async (req, res, next) => {
   if (!folder) {
     const err = new Error('Folder not found');
     err.status = 404;
+    return next(err);
+  }
+
+  if (folder.isIndex) {
+    const err = new Error('Cannot edit index');
+    err.status = 403;
     return next(err);
   }
 
@@ -177,7 +171,17 @@ exports.deleteFolderGet = asyncHandler(async (req, res, next) => {
     return next(err);
   }
 
-  return res.render('delete', { title: 'Delete Folder?', name: folder.name });
+  if (folder.isIndex) {
+    const err = new Error('Cannot delete index');
+    err.status = 403;
+    return next(err);
+  }
+
+  return res.render('delete', {
+    title: 'Delete Folder?',
+    name: folder.name,
+    folder,
+  });
 });
 
 exports.deleteFolderPost = asyncHandler(async (req, res, next) => {
@@ -186,6 +190,6 @@ exports.deleteFolderPost = asyncHandler(async (req, res, next) => {
   });
 
   return res.redirect(
-    folder.parentfolderId ? `/folders/${folder.parentfolderId}` : '/',
+    folder.parentFolderId ? `/folders/${folder.parentFolderId}` : '/',
   );
 });

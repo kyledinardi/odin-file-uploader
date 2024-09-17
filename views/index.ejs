@@ -13,30 +13,32 @@
       <a href="/logout"><button>Log Out</button></a>
       <% } else { %>
       <a href="/login"><button>Log In</button></a>
-      <a href="sign-up"><button>Sign Up</button></a>
+      <a href="/sign-up"><button>Sign Up</button></a>
       <% } %>
     </nav>
     <main>
       <div class="toolbar">
-        <form action="/folders/<%= folderId %>/create-folder" method="post">
-          <input
-            type="text"
-            name="folderName"
-            id="folderName"
-            placeholder="Folder Name"
-            required
-          />
-          <button>Create Folder</button>
-        </form>
-        <% if (locals.folderNameErrors) { %>
-        <ul>
-          <% folderNameErrors.map((error) => { %>
-          <li><%= error.msg %></li>
-          <% }) %>
-        </ul>
-        <% } %>
+        <div class="createFolder">
+          <form action="/folders/<%= folder.id %>/create-folder" method="post">
+            <input
+              type="text"
+              name="folderName"
+              id="folderName"
+              placeholder="Folder Name"
+              required
+            />
+            <button>Create Folder</button>
+          </form>
+          <% if (locals.folderNameErrors) { %>
+          <ul>
+            <% folderNameErrors.map((error) => { %>
+            <li><%= error.msg %></li>
+            <% }) %>
+          </ul>
+          <% } %>
+        </div>
         <form
-          action="/folders/<%= folderId %>/upload"
+          action="/folders/<%= folder.id %>/upload"
           method="post"
           enctype="multipart/form-data"
           id="uploadForm"
@@ -58,9 +60,7 @@
           <input type="file" name="file" id="file" required hidden />
         </form>
         <button>
-          <a
-            href="<%= title === 'Home' ? '/' : `/folders/${folderId}/up-directory` %>"
-          >
+          <a href="<%= `/folders/${folder.id}/up-directory` %>">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               height="24px"
@@ -73,30 +73,57 @@
             </svg>
           </a>
         </button>
-        <p><%= path %></p>
+        <p><%= folder.path %></p>
       </div>
       <div>
-        <h2><%= title %></h1>
+        <h2><%= title %></h2>
+        <div>
+          <a href="/folders/<%= folder.id %>/share">
+            <button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                height="24px"
+                viewBox="0 -960 960 960"
+                width="24px"
+              >
+                <path
+                  d="M680-80q-50 0-85-35t-35-85q0-6 3-28L282-392q-16 15-37 23.5t-45 8.5q-50 0-85-35t-35-85q0-50 35-85t85-35q24 0 45 8.5t37 23.5l281-164q-2-7-2.5-13.5T560-760q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-24 0-45-8.5T598-672L317-508q2 7 2.5 13.5t.5 14.5q0 8-.5 14.5T317-452l281 164q16-15 37-23.5t45-8.5q50 0 85 35t35 85q0 50-35 85t-85 35Zm0-80q17 0 28.5-11.5T720-200q0-17-11.5-28.5T680-240q-17 0-28.5 11.5T640-200q0 17 11.5 28.5T680-160ZM200-440q17 0 28.5-11.5T240-480q0-17-11.5-28.5T200-520q-17 0-28.5 11.5T160-480q0 17 11.5 28.5T200-440Zm480-280q17 0 28.5-11.5T720-760q0-17-11.5-28.5T680-800q-17 0-28.5 11.5T640-760q0 17 11.5 28.5T680-720Zm0 520ZM200-480Zm480-280Z"
+                />
+              </svg>
+            </button>
+          </a>
+          <% if (Date.now() < folder.shareExpires.getTime()) { %>
+          <div>
+            <p>
+              Share Address:
+              <a href="<%= folder.shareUrl %>"><%= folder.shareUrl %></a>
+            </p>
+            <p>Active Until: <%= folder.shareExpires.toLocaleString() %></p>
+          </div>
+          <% } %>
+        </div>
         <table>
           <tr>
             <th>Name</th>
             <th>Created At</th>
             <th>Updated At</th>
             <th>File Size</th>
-            <th>Edit</th>
-            <th>Delete</th>
-            <th>Download</th>
+            <th></th>
+            <th></th>
+            <th></th>
           </tr>
-          <% folders.map((folder) => { %>
+          <% childFolders.map((childFolder) => { %>
           <tr>
             <td>
-              <a href="/folders/<%= folder.id %>"><%= folder.name %></a>
+              <a href="/folders/<%= childFolder.id %>"
+                ><%= childFolder.name %></a
+              >
             </td>
-            <td><%= folder.created.toLocaleString() %></td>
-            <td><%= folder.updated.toLocaleString() %></td>
+            <td><%= childFolder.created.toLocaleString() %></td>
+            <td><%= childFolder.updated.toLocaleString() %></td>
             <td></td>
             <td>
-              <a href="/folders/<%= folder.id %>/edit">
+              <a href="/folders/<%= childFolder.id %>/edit">
                 <button>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -112,7 +139,7 @@
               </a>
             </td>
             <td>
-              <a href="/folders/<%= folder.id %>/delete">
+              <a href="/folders/<%= childFolder.id %>/delete">
                 <button>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -127,7 +154,22 @@
                 </button>
               </a>
             </td>
-            <td></td>
+            <td>
+              <a href="/folders/<%= childFolder.id %>/share">
+                <button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    height="24px"
+                    viewBox="0 -960 960 960"
+                    width="24px"
+                  >
+                    <path
+                      d="M680-80q-50 0-85-35t-35-85q0-6 3-28L282-392q-16 15-37 23.5t-45 8.5q-50 0-85-35t-35-85q0-50 35-85t85-35q24 0 45 8.5t37 23.5l281-164q-2-7-2.5-13.5T560-760q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-24 0-45-8.5T598-672L317-508q2 7 2.5 13.5t.5 14.5q0 8-.5 14.5T317-452l281 164q16-15 37-23.5t45-8.5q50 0 85 35t35 85q0 50-35 85t-85 35Zm0-80q17 0 28.5-11.5T720-200q0-17-11.5-28.5T680-240q-17 0-28.5 11.5T640-200q0 17 11.5 28.5T680-160ZM200-440q17 0 28.5-11.5T240-480q0-17-11.5-28.5T200-520q-17 0-28.5 11.5T160-480q0 17 11.5 28.5T200-440Zm480-280q17 0 28.5-11.5T720-760q0-17-11.5-28.5T680-800q-17 0-28.5 11.5T640-760q0 17 11.5 28.5T680-720Zm0 520ZM200-480Zm480-280Z"
+                    />
+                  </svg>
+                </button>
+              </a>
+            </td>
           </tr>
           <% }) %> <% files.map((file) => { %>
           <tr>
@@ -188,7 +230,7 @@
               </a>
             </td>
           </tr>
-          <% }) %><% if (folders.length === 0 && files.length === 0) { %>
+          <% }) %><% if (childFolders.length === 0 && files.length === 0) { %>
           <tr>
             <td class="emptyTableRow" colspan="7">This folder is empty</td>
           </tr>

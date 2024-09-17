@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= title %></title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <nav>
+      <% if (currentUser) { %>
+      <a href="/"><button>Home</button></a>
+      <a href="/logout"><button>Log Out</button></a>
+      <% } else { %>
+      <a href="/login"><button>Log In</button></a>
+      <a href="/sign-up"><button>Sign Up</button></a>
+      <% } %>
+    </nav>
+    <main>
+      <h1><%= title %></h1>
+      <form class="editForm" method="post">
+        <label for="duration">Link duration (in days)</label>
+        <input type="number" name="duration" id="duration" min="0" value="1" />
+        <button>Generate Link</button>
+      </form>
+    </main>
+  </body>
+</html>
